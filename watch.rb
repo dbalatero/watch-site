@@ -33,5 +33,7 @@ loop do
     send_sms(number, "Page has changed! #{url}")
   end
 
+  puts "sleeping"
+
   sleep 300
 end
