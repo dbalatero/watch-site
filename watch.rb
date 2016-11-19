@@ -4,12 +4,14 @@ require 'bundler'
 Bundler.require
 
 if ARGV.size < 2
-  abort "Usage: ruby watch.rb [sms number] [url]"
+  abort "Usage: ruby watch.rb [sms number] [url] [phrases...]"
 end
 
 number = ARGV[0]
 url = ARGV[1]
-sleep_ms = (ARGV[2] || 300).to_i
+sleep_ms = 300
+
+phrases = ARGV[2..-1]
 
 def send_sms(number, message)
   system(
@@ -18,26 +20,22 @@ def send_sms(number, message)
   )
 end
 
-puts "==> Watching #{url}"
+puts "==> Watching #{url} for #{phrases.inspect}"
 send_sms(number, "Watching #{url} for changes...")
-
-previous_hash = nil
-previous_body = nil
 
 loop do
   content = HTTParty.get(url).body
-  current_hash = Digest::MD5.hexdigest(content)
+  page = Nokogiri::HTML(content)
+  text = page.text
 
-  print "Checking URL... got hash #{current_hash[0..6]}... "
-  print "old hash #{previous_hash[0..6]}... " if previous_hash
+  print "Checking URL... "
 
-  if previous_hash != current_hash && !previous_hash.nil?
+  if phrases.any? { |phrase| text.include?(phrase) }
     print "sending text... "
     send_sms(number, "Page has changed! #{url}")
+  else
+    print "no changes. "
   end
-
-  previous_hash = current_hash
-  previous_body = content
 
   puts "sleeping"
 
