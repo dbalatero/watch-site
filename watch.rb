@@ -9,6 +9,7 @@ end
 
 number = ARGV[0]
 url = ARGV[1]
+sleep_ms = ARGV[2] || 300
 
 def send_sms(number, message)
   system(
@@ -27,13 +28,15 @@ loop do
   current_hash = Digest::MD5.hexdigest(content)
 
   print "Checking URL... got hash #{current_hash[0..6]}... "
-  print "old hash #{current_hash[0..6]}... "
+  print "old hash #{previous_hash[0..6]}... "
 
   if previous_hash != current_hash && !previous_hash.nil?
     send_sms(number, "Page has changed! #{url}")
   end
 
+  previous_hash = current_hash
+
   puts "sleeping"
 
-  sleep 300
+  sleep(sleep_ms)
 end
